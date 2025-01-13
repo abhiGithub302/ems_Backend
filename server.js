@@ -4,7 +4,7 @@ import cors from "cors";
 import connect from "./src/db/connect.js";
 import cookieParser from "cookie-parser";
 import fs from "node:fs";
-import errorHandler from "./src/helpers/errorhandler.js";
+import errorHandler from "./src/helpers/errorhandler.js"; // Imported once
 
 dotenv.config();
 
@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // error handler middleware
-app.use(errorHandler);
+app.use(errorHandler); // No need to redefine it here
 
 // Dynamically load routes
 const routeFiles = fs.readdirSync("./src/routes");
@@ -39,18 +39,6 @@ routeFiles.forEach((file) => {
       console.log("Failed to load route file:", file, err);
     });
 });
-
-// error handler middleware to catch unhandled errors
-const errorHandler = (err, req, res, next) => {
-  if (res.headersSent) {
-    return next(err); // If headers are already sent, pass the error to default Express handler
-  }
-
-  res.status(err.status || 500).json({
-    message: err.message || "Internal Server Error",
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
-  });
-};
 
 const server = async () => {
   try {
