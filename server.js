@@ -26,7 +26,7 @@ app.use(cookieParser());
 // error handler middleware
 app.use(errorHandler);
 
-//routes
+// Dynamically load routes
 const routeFiles = fs.readdirSync("./src/routes");
 
 routeFiles.forEach((file) => {
@@ -36,9 +36,21 @@ routeFiles.forEach((file) => {
       app.use("/api/v1", route.default);
     })
     .catch((err) => {
-      console.log("Failed to load route file", err);
+      console.log("Failed to load route file:", file, err);
     });
 });
+
+// error handler middleware to catch unhandled errors
+const errorHandler = (err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err); // If headers are already sent, pass the error to default Express handler
+  }
+
+  res.status(err.status || 500).json({
+    message: err.message || "Internal Server Error",
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+  });
+};
 
 const server = async () => {
   try {
@@ -48,7 +60,7 @@ const server = async () => {
       console.log(`Server is running on port ${port}`);
     });
   } catch (error) {
-    console.log("Failed to strt server.....", error.message);
+    console.log("Failed to start server...", error.message);
     process.exit(1);
   }
 };
